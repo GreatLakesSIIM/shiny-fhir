@@ -2,6 +2,7 @@
 
 library("shinydashboard")
 library("shiny")
+library("DT")
 require("httr")
 require("jsonlite")
 
@@ -21,11 +22,7 @@ ui <- dashboardPage(
       tabItem(tabName = "dashboard",
               #boxes are put in rows or columns
               fluidRow(
-                box(plotOutput("Plot1", height = 300)),
-                box(
-                  title = "Controls", 
-                  sliderInput("slider", "Number of Observations:", 1, 100, 50)
-                )
+                box(DT::dataTableOutput("patient"), title = "Patient Data")
               )
       ),
       #2nd tab
@@ -37,12 +34,15 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output){
-  set.seed(324)
-  histdata <- rnorm(400)
-  output$Plot1 <-renderPlot({
-    data <- histdata[seq_len(input$slider)]
-    hist(data)
-  })
+  url <- "http://hackathon.siim.org/fhir/Patient/siimjoe"
+  #dependency: local system variable called SiimApiKey
+  myKey <-Sys.getenv('SiimApiKey')
+  patientReturn <- GET(url, accept_json(), add_headers('apikey' = myKey))
+  get_patient_text <- content(patientReturn, "text")
+  get_patient_json <- fromJSON(get_patient_text, flatten = TRUE) 
+  #table of returned data
+  patientData <- as.data.frame(get_patient_json)
+  output$patient <- DT::renderDataTable({ patientData })
 }
 
 shinyApp(ui, server)
