@@ -1,0 +1,35 @@
+{
+  "resourceType" : "Patient",
+  "identifier" : [{ "Identifier" : "Identifier" }], 
+  "active" : "<boolean>", 
+  "name" : [{ "HumanName" : "HumanName" }], 
+  "telecom" : [{ "ContactPoint" : "ContactPoint" }], 
+  "gender" : "<code>",
+  "birthDate" : "<date>", 
+  "deceasedBoolean" : "<boolean>",
+  "deceasedDateTime" : "<dateTime>",
+  "address" : [{ "Address" : "Address" }], 
+  "maritalStatus" : { "CodeableConcept" : "Code" }, 
+  "multipleBirthBoolean" : "<boolean>",
+  "multipleBirthInteger" : "<integer>",
+  "photo" : [{ "Attachment" : "Attachment" }],
+  "contact" : [{ 
+    "relationship" : [{ "CodeableConcept" : "CodeableConcept" }], 
+    "name" : { "HumanName" : "name"}, 
+    "telecom" : [{ "ContactPoint" : "ContactPoint" }],
+    "address" : { "Address" : "Address" }, 
+    "gender" : "<code>",
+    "organization" : { "Reference(Organization)" : "Organization"}, 
+    "period" : { "Period" : "Period"} 
+  }],
+  "communication" : [{ 
+    "language" : { "CodeableConcept" : "Code" }, 
+    "preferred" : "<boolean>" 
+  }],
+  "generalPractitioner" : [{ "Reference(Organization|Practitioner|PractitionerRole)" : "Reference" }], 
+  "managingOrganization" : { "Reference(Organization)" : "Organization"}, 
+  "link" : [{ 
+    "other" : { "Reference(Patient|RelatedPerson)" : "Person"}, 
+    "type" : "<code>" 
+  }]
+}

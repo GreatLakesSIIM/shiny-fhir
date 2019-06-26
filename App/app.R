@@ -6,6 +6,13 @@ library("DT")
 require("httr")
 require("jsonlite")
 
+labelMandatory <- function(label) {
+  tagList(
+    label,
+    span("*", class = "mandatory_star")
+  )
+}
+
 #UI
 ui <- dashboardPage(
   dashboardHeader(title = "SIIM Excitement"),
