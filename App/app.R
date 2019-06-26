@@ -2,6 +2,8 @@
 
 library("shinydashboard")
 library("shiny")
+require("httr")
+require("jsonlite")
 
 #UI
 ui <- dashboardPage(
