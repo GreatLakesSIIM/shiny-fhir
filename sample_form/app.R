@@ -15,6 +15,22 @@ require("httr")
 require("jsonlite")
 library("listviewer")
 
+all_patient_json <- function(){
+    json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                                accept_json(),
+                                add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                     flatten=TRUE)
+    return(json)
+}
+
+patient_json <- function(patientId){
+    json <- fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/Patient/',patientId),
+                                         accept_json(),
+                                         add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                             flatten=TRUE)
+    return(json)
+}
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -26,51 +42,39 @@ ui <- fluidPage(
         
         sidebarPanel(
             
-            
             selectInput(inputId="organization",
                         label="Organization:", 
                         choices=c("siim"),
                         selected = "siim")
             
-            , htmlOutput("selectUI")
+            , selectInput(inputId="patientId",
+                        label="Patient Id:", 
+                        choices=all_patient_json()$entry$resource.id,
+                        selected=all_patient_json()$entry$resource.id[1])
             
         ),
         
         # Show a options to select
         mainPanel(
             
-            tableOutput('patientInfo')
+            DT::dataTableOutput("patientInfo")
             
         )
     )
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output, session) {
+server <- function(input, output) {
     
-    organization <- reactive({get(intput$organization)})
+    patient_id <- reactive({input$patientId})
     
-    patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
-                                         accept_json(),
-                                         add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
-                             flatten=TRUE)
-    patientIdList <- patient_json$entry$resource.id
-    
-    output$selectUI <- renderUI({
-        selectInput("patientId", "Patient Id:",patientIdList,selected=patientIdList[1])
+    obs <- observe({
+        
+        patient_data <- as.data.frame(patient_json(patient_id()))
+        
+        output$patientInfo <- DT::renderDataTable({ patient_data })
+        
     })
-    
-    #patient <- reactive({get(input$patient)})
-    
-    #patient_json <- fromJSON(content(GET(paste('http://hackathon.siim.org/fhir/Patient/',patient,sep=""),
-    #                                    accept_json(),
-    #                                    add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),
-    #                                "text"),
-    #                        flatten = TRUE)
-    
-    #patientData <- as.data.frame(patient_json)
-    
-    #output$patientInfo <- renderTable({ patientData })
     
 }
 
