@@ -1,0 +1,13 @@
+name: FormsOnFHIR
+title: FormsOnFHIR
+username:
+account: formsonfhir
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1002452
+bundleId: 2184531
+url: https://formsonfhir.shinyapps.io/FormsOnFHIR/
+when: 1561678455.95459
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: helper-script.R
