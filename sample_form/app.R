@@ -9,30 +9,30 @@
 
 library("shiny")
 library("shinydashboard")
+library("shinyjs")
 library("DT")
 require("httr")
 require("jsonlite")
+library("listviewer")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Create New Patient"),
+    titlePanel("Access Patient Info"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         
         sidebarPanel(
             
+            
             selectInput(inputId="organization",
                         label="Organization:", 
                         choices=c("siim"),
                         selected = "siim")
             
-            , selectInput(inputId="patient", 
-                          label="Patient:", 
-                          choices=c("siimjoe","siimsally"), 
-                          selected="siimjoe")
+            , htmlOutput("selectUI")
             
         ),
         
@@ -48,28 +48,29 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
     
-    #output$organization_resource <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Organization',
-    #                                            accept_json(),
-    #                                            add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"))
+    organization <- reactive({get(intput$organization)})
     
-    #, output$patientList <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
-    #                           accept_json(),
-    #                           add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"))
-    #observe({
-    #    updateSelectInput(session,"patient", choices = names(patientList))
-    #})
+    patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                                         accept_json(),
+                                         add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                             flatten=TRUE)
+    patientIdList <- patient_json$entry$resource.id
     
-    patient <- reactive({get(input$patient)})
+    output$selectUI <- renderUI({
+        selectInput("patientId", "Patient Id:",patientIdList,selected=patientIdList[1])
+    })
     
-    patient_json <- fromJSON(content(GET(paste('http://hackathon.siim.org/fhir/Patient/',patient,sep=""),
-                                        accept_json(),
-                                        add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),
-                                    "text"),
-                            flatten = TRUE)
+    #patient <- reactive({get(input$patient)})
     
-    patientData <- as.data.frame(patient_json)
+    #patient_json <- fromJSON(content(GET(paste('http://hackathon.siim.org/fhir/Patient/',patient,sep=""),
+    #                                    accept_json(),
+    #                                    add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),
+    #                                "text"),
+    #                        flatten = TRUE)
     
-    output$patientInfo <- renderTable({ patientData })
+    #patientData <- as.data.frame(patient_json)
+    
+    #output$patientInfo <- renderTable({ patientData })
     
 }
 
