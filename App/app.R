@@ -481,26 +481,32 @@ patientTab <- tabItem(tabName = "patient",
 #UI
 ui <- dashboardPage(
   dashboardHeader(title = "SIIM Excitement"),
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Edit JSON",
-               tabName = "json",
-               icon = icon("dashboard")),
-      menuItem("Patient",
-               tabName = "patient",
-               icon = icon("th")),
-      menuItem("Organization",
-               tabName = "organization",
-               icon = icon("th")),
-      menuItem("Practitioner",
-               tabName = "practitioner",
-               icon = icon("th")),
-      menuItem("Diagnostic Report",
-               tabName = "DR",
-               icon = icon("th")),
-      menuItem("Data Table",
-               tabName = "dataTable",
-               icon = icon("th"))
+
+  dashboardSidebar(sidebarMenu(
+    # Custom CSS to hide the default logout panel
+    tags$head(tags$style(HTML('.shiny-server-account { display: none; }'))),
+    
+    # The dynamically-generated user panel
+    uiOutput("userpanel"),
+    menuItem(
+      "Edit JSON",
+      tabName = "json",
+      icon = icon("dashboard")
+    ),
+    menuItem(
+      "Patient", 
+      tabName = "patient", 
+      icon = icon("th")
+    ),
+    menuItem(
+      "Organization", 
+      tabName = "organization", 
+      icon = icon("th")
+    ),
+    menuItem(
+      "Data Table", 
+      tabName = "dataTable", 
+      icon = icon("th")
     )
   ),
   dashboardBody(
@@ -525,19 +531,22 @@ ui <- dashboardPage(
     )
   )
 )
+)
 
-server <- function(input, output) {
-  patient_json <-
-    fromJSON(content(
-      GET(
-        'http://hackathon.siim.org/fhir/Patient',
-        accept_json(),
-        add_headers('apikey' = Sys.getenv(x =
-                                            'SiimApiKey'))
-      ),
-      "text"
-    ),
-    flatten = TRUE)
+server <- function(input, output, session) {
+  output$userpanel <- renderUI({
+    # session$user is non-NULL only in authenticated sessions
+    if (is.null(session$user)) {
+      sidebarUserPanel(
+        span("Logged in as Dr. Barrington"),
+        subtitle = a(icon("sign-out"), "Logout", href="https://twitter.com/logout")
+      )
+    }
+  })
+  patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                                       accept_json(),
+                                       add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                           flatten=TRUE)
   patientIdList <- patient_json$entry$resource.id
   
   output$selectUI <- renderUI({
