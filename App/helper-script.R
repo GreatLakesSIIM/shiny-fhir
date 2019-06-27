@@ -15,3 +15,5 @@
 # 
 # #view table of returned data
 # data <- as.data.frame(get_patient_json)
+
+jsonedit(data)

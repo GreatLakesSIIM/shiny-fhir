@@ -1,10 +1,12 @@
-#introduction to shiny dashboard
+# SIIM Shiny Dashboard
 
 library("shinydashboard")
 library("shiny")
+library("shinyjs")
 library("DT")
 require("httr")
 require("jsonlite")
+library("listviewer")
 
 patientDefaults <-
   c(
@@ -235,17 +237,28 @@ ui <- dashboardPage(
   dashboardHeader(title = "SIIM Excitement"),
   dashboardSidebar(sidebarMenu(
     menuItem(
-      "Dashboard",
-      tabName = "dashboard",
+      "Edit JSON",
+      tabName = "json",
       icon = icon("dashboard")
     ),
-    menuItem("Patient", tabName = "patient", icon = icon("th"))
+    menuItem(
+      "Patient", 
+      tabName = "patient", 
+      icon = icon("th")
+    ),
+    menuItem(
+      "Data Table", 
+      tabName = "dataTable", 
+      icon = icon("th")
+    )
   )),
-  dashboardBody(#tab items must correspond with values for tab names
+  dashboardBody(
     tabItems(
-      #first tab
-      tabItem(tabName = "dashboard",
-              #boxes are put in rows or columns
+      tabItem(tabName = "json",
+              fluidRow(
+                box(jsoneditOutput("edits"))
+              )),
+      tabItem(tabName = "dataTable",
               fluidRow(
                 box(DT::dataTableOutput("patient"), title = "Patient Data")
               )),
@@ -255,6 +268,15 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output) {
+  patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                                       accept_json(),
+                                       add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                           flatten=TRUE)
+  patientIdList <- patient_json$entry$resource.id
+  
+  output$selectUI <- renderUI({
+    selectedpatientId <- selectInput("patientId", labelMandatory("PatientId:"),patientIdList,selected=patientIdList[1])
+  })
   observe({
     mandatoryFilled <-
       vapply(fieldsMandatory,
@@ -297,18 +319,52 @@ server <- function(input, output) {
       shinyjs::enable("submit")
     })
   })
+
+      tabItem(tabName = "patient",
+              fluidPage(title = "Patient form example",
+                        fluidRow(column(
+                          6,
+                          div(
+                            id = "form",
+                            htmlOutput("selectUI"),
+                            dateInput("dob", labelMandatory("DOB")),
+                            checkboxInput("isSmoker", "Is smoker?", FALSE),
+                            sliderInput("r_num_years", "Number of years using R", 0, 25, 2, ticks = FALSE),
+                            selectInput(
+                              "os_type",
+                              "Operating system used most frequently",
+                              c("",  "Windows", "Mac", "Linux")
+                            ),
+                            actionButton("submit", "Submit", class = "btn-primary"),
+                            
+                            shinyjs::hidden(span(id = "submit_msg", "Submitting..."),
+                                            div(id = "error",
+                                                div(
+                                                  br(), tags$b("Error: "), span(id = "error_msg")
+                                                ))))))))
+
   url <- "http://hackathon.siim.org/fhir/Patient/siimjoe"
-  #dependency: local system variable called SiimApiKey
+  # dependency: local system variable called SiimApiKey
   myKey <- Sys.getenv('SiimApiKey')
-  patientReturn <-
-    GET(url, accept_json(), add_headers('apikey' = myKey))
+  patientReturn <- GET(
+    url, 
+    accept_json(), 
+    add_headers('apikey' = myKey))
   get_patient_text <- content(patientReturn, "text")
   get_patient_json <- fromJSON(get_patient_text, flatten = TRUE)
-  #table of returned data
+  # table of returned data
   patientData <- as.data.frame(get_patient_json)
   output$patient <- DT::renderDataTable({
-    patientData
+    patientData[, c(2,14:22)]
   })
+  # interactive json editor of data
+  output$edits <- renderJsonedit({
+    jsonedit(
+      as.list( data ),
+      "change" = htmlwidgets::JS('function(){
+                                  console.log( event.currentTarget.parentNode.editor.get() )
+  }'))
+    })
 }
 
 shinyApp(ui, server)
