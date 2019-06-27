@@ -8,6 +8,38 @@ require("httr")
 require("jsonlite")
 library("listviewer")
 
+orgType <- c("prov","dept","team","govt","ins","pay","edu","reli","crs","cg","bus","other")
+
+orgDefaults <- c("type","name","alias","prefix",
+                 "given",
+                 "family",
+                 "suffix",
+                 "phone",
+                 "email",
+                 "use",
+                 "line",
+                 "city",
+                 "state",
+                 "postalCode",
+                 "country",
+                 "partOf"
+                 )
+orgFields <- c("type","name","alias","prefix",
+                 "given",
+                 "family",
+                 "suffix",
+                 "phone",
+                 "email",
+                 "use",
+                 "line",
+                 "city",
+                 "state",
+                 "postalCode",
+                 "country",
+                 "partOf"
+)
+names(orgDefaults) <- orgFields
+
 patientDefaults <-
   c(
     "Ms.",
@@ -137,7 +169,49 @@ saveData <- function(data) {
     quote = TRUE
   )
 }
-
+orgTab <- tabItem(tabName = "organization",
+    fluidPage(title = "Organization form example",
+              fluidRow(column(
+                6,
+                div(
+                  id = "orgForm",
+                  selectInput(
+                    "type",
+                    labelMandatory("Org Type"),
+                    choices = orgType),                         
+                  textInput("name", labelMandatory("Name of Organization"), orgDefaults[["name"]]),
+                  textInput("alias", ("Alias of Organization"), orgDefaults[["alias"]]),
+                  textInput("prefix", ("Prefix"), orgDefaults[["prefix"]]),
+                  textInput("given", labelMandatory("First Name"), orgDefaults[["given"]]),
+                  textInput("family", labelMandatory("Last Name"), orgDefaults[["family"]]),
+                  textInput("suffix", ("Suffix"), orgDefaults[["suffix"]]),
+                  
+                  numericInput("phone", labelMandatory("Phone Number"), orgDefaults[["phone"]]),
+                  textInput("email", labelMandatory("Email"), orgDefaults[["email"]]),
+                  selectInput(
+                    "use",
+                    labelMandatory("Phone Type"),
+                    choices = list(
+                      "Home" = "home",
+                      "Work" = "work",
+                      "Mobile" = "mobile",
+                      "Old" = "old"
+                    )
+                  ),
+                  textInput("line", labelMandatory("Street Address"), orgDefaults[["line"]]),
+                  textInput("city", labelMandatory("City"), orgDefaults[["city"]]),
+                  textInput("state", labelMandatory("State"), orgDefaults[["state"]]),
+                  textInput("postalCode", labelMandatory("postalCode"), orgDefaults[["postalCode"]]),
+                  textInput("country", labelMandatory("Country"), orgDefaults[["country"]]),
+                  
+                  textInput("partOf", ("Part of:"), orgDefaults[["partOf"]]),
+                  actionButton("submitOrg", "Submit", class = "btn-primary")
+                  
+                  )
+              )
+          )
+      )
+)
 patientTab <- tabItem(tabName = "patient",
   fluidPage(title = "Patient form example",
       fluidRow(column(
@@ -247,6 +321,11 @@ ui <- dashboardPage(
       icon = icon("th")
     ),
     menuItem(
+      "Organization", 
+      tabName = "organization", 
+      icon = icon("th")
+    ),
+    menuItem(
       "Data Table", 
       tabName = "dataTable", 
       icon = icon("th")
@@ -263,7 +342,8 @@ ui <- dashboardPage(
                 box(DT::dataTableOutput("patient"), title = "Patient Data")
               )),
       #2nd tab
-      patientTab
+      patientTab,
+      orgTab
     ))
 )
 
@@ -298,6 +378,13 @@ server <- function(input, output) {
     data <- t(data)
     data
   })
+  formDataOrg <- reactive({
+    data <- sapply(orgFields, function(x)
+      input[[x]])
+    data <- c(data, timestamp = epochTime())
+    data <- t(data)
+    data
+  })
   observeEvent(input$submit, {
     # User-experience stuff
     shinyjs::disable("submit")
@@ -319,7 +406,25 @@ server <- function(input, output) {
       shinyjs::enable("submit")
     })
   })
+  observeEvent(input$submitOrg, {
+    # User-experience stuff
+    shinyjs::disable("submitOrg")
 
+    # Save the data (show an error message in case of error)
+    tryCatch({
+      saveData(formDataOrg())
+      shinyjs::reset("orgForm")
+    },
+    error = function(err) {
+      shinyjs::html("error_msg", err$message)
+      shinyjs::show(id = "error",
+                    anim = TRUE,
+                    animType = "fade")
+    },
+    finally = {
+      shinyjs::enable("submitOrg")
+    })
+  })
       tabItem(tabName = "patient",
               fluidPage(title = "Patient form example",
                         fluidRow(column(
