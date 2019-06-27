@@ -310,6 +310,11 @@ patientTab <- tabItem(tabName = "patient",
 ui <- dashboardPage(
   dashboardHeader(title = "SIIM Excitement"),
   dashboardSidebar(sidebarMenu(
+    # Custom CSS to hide the default logout panel
+    tags$head(tags$style(HTML('.shiny-server-account { display: none; }'))),
+    
+    # The dynamically-generated user panel
+    uiOutput("userpanel"),
     menuItem(
       "Edit JSON",
       tabName = "json",
@@ -347,7 +352,16 @@ ui <- dashboardPage(
     ))
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+  output$userpanel <- renderUI({
+    # session$user is non-NULL only in authenticated sessions
+    if (is.null(session$user)) {
+      sidebarUserPanel(
+        span("Logged in as Dr. Barrington"),
+        subtitle = a(icon("sign-out"), "Logout", href="https://twitter.com/logout")
+      )
+    }
+  })
   patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
                                        accept_json(),
                                        add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
