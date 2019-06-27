@@ -49,7 +49,7 @@ ui <- dashboardPage(
                           6,
                           div(
                             id = "form",
-                            textInput("name", labelMandatory("Name"), "Patient Name"),
+                            htmlOutput("selectUI"),
                             dateInput("dob", labelMandatory("DOB")),
                             checkboxInput("isSmoker", "Is smoker?", FALSE),
                             sliderInput("r_num_years", "Number of years using R", 0, 25, 2, ticks = FALSE),
@@ -68,6 +68,17 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output) {
+  
+  patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                                       accept_json(),
+                                       add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                           flatten=TRUE)
+  patientIdList <- patient_json$entry$resource.id
+  
+  output$selectUI <- renderUI({
+    selectedpatientId <- selectInput("patientId", labelMandatory("PatientId:"),patientIdList,selected=patientIdList[1])
+  })
+  
   url <- "http://hackathon.siim.org/fhir/Patient/siimjoe"
   # dependency: local system variable called SiimApiKey
   myKey <- Sys.getenv('SiimApiKey')
