@@ -572,19 +572,7 @@ server <- function(input, output, session) {
       )
     }
   })
-  patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
-                                       accept_json(),
-                                       add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
-                           flatten=TRUE)
-  patientIdList <- patient_json$entry$resource.id
   
-  output$selectUI <- renderUI({
-    selectedpatientId <-
-      selectInput("patientId",
-                  labelMandatory("PatientId:"),
-                  patientIdList,
-                  selected = patientIdList[1])
-  })
   observe({
     mandatoryFilled <-
       vapply(fieldsMandatory,
@@ -727,33 +715,6 @@ server <- function(input, output, session) {
       shinyjs::enable("DRSubmit")
     })
   })
-  
-  tabItem(tabName = "patient",
-          fluidPage(title = "Patient form example",
-                    fluidRow(column(
-                      6,
-                      div(
-                        id = "form",
-                        htmlOutput("selectUI"),
-                        dateInput("dob", labelMandatory("DOB")),
-                        checkboxInput("isSmoker", "Is smoker?", FALSE),
-                        sliderInput("r_num_years", "Number of years using R", 0, 25, 2, ticks = FALSE),
-                        selectInput(
-                          "os_type",
-                          "Operating system used most frequently",
-                          c("",  "Windows", "Mac", "Linux")
-                        ),
-                        actionButton("submit", "Submit", class = "btn-primary"),
-                        
-                        shinyjs::hidden(
-                          span(id = "submit_msg", "Submitting..."),
-                          div(id = "error",
-                              div(
-                                br(), tags$b("Error: "), span(id = "error_msg")
-                              ))
-                        )
-                      )
-                    ))))
   
   # reactive patient data
   patient_id <- reactive({input$patientId})
