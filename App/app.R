@@ -9,6 +9,23 @@ require("jsonlite")
 library("listviewer")
 jscode <- "shinyjs.refresh = function() { location.reload(); }"
 
+all_patient_json <- function(){
+  json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+                               accept_json(),
+                               add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                   flatten=TRUE)
+  return(json)
+}
+
+patient_json <- function(patientId){
+  json <- fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/Patient/',patientId),
+                               accept_json(),
+                               add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
+                   flatten=TRUE)
+  return(json)
+}
+
+
 DRDefaults <- c(
   "category",
   "code",
@@ -490,11 +507,6 @@ ui <- dashboardPage(
     # The dynamically-generated user panel
     uiOutput("userpanel"),
     menuItem(
-      "Edit JSON",
-      tabName = "json",
-      icon = icon("dashboard")
-    ),
-    menuItem(
       "Patient", 
       tabName = "patient", 
       icon = icon("th")
@@ -522,16 +534,23 @@ ui <- dashboardPage(
   )),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "json",
-              fluidRow(box(
-                jsoneditOutput("edits"), width = 12
-              ))),
       tabItem(tabName = "dataTable",
               fluidRow(
                 box(
-                  DT::dataTableOutput("patient"),
-                  title = "Patient Data",
-                  width = 12
+                  
+                  selectInput(inputId="organization",
+                              label="Organization:", 
+                              choices=c("siim"),
+                              selected = "siim")
+                  
+                  , selectInput(inputId="patientId",
+                                label="Patient Id:", 
+                                choices=all_patient_json()$entry$resource.id,
+                                selected=all_patient_json()$entry$resource.id[1])
+                  
+                  , DT::dataTableOutput("patientInfo")
+                  , title = "Patient Data"
+                  , width = 12
                 )
               )),
       #2nd tab
@@ -554,19 +573,7 @@ server <- function(input, output, session) {
       )
     }
   })
-  patient_json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
-                                       accept_json(),
-                                       add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
-                           flatten=TRUE)
-  patientIdList <- patient_json$entry$resource.id
   
-  output$selectUI <- renderUI({
-    selectedpatientId <-
-      selectInput("patientId",
-                  labelMandatory("PatientId:"),
-                  patientIdList,
-                  selected = patientIdList[1])
-  })
   observe({
     mandatoryFilled <-
       vapply(fieldsMandatory,
@@ -712,57 +719,13 @@ server <- function(input, output, session) {
     })
   })
   
-  tabItem(tabName = "patient",
-          fluidPage(title = "Patient form example",
-                    fluidRow(column(
-                      6,
-                      div(
-                        id = "form",
-                        htmlOutput("selectUI"),
-                        dateInput("dob", labelMandatory("DOB")),
-                        checkboxInput("isSmoker", "Is smoker?", FALSE),
-                        sliderInput("r_num_years", "Number of years using R", 0, 25, 2, ticks = FALSE),
-                        selectInput(
-                          "os_type",
-                          "Operating system used most frequently",
-                          c("",  "Windows", "Mac", "Linux")
-                        ),
-                        actionButton("submit", "Submit", class = "btn-primary"),
-                        
-                        shinyjs::hidden(
-                          span(id = "submit_msg", "Submitting..."),
-                          div(id = "error",
-                              div(
-                                br(), tags$b("Error: "), span(id = "error_msg")
-                              ))
-                        )
-                      )
-                    ))))
+  # reactive patient data
+  patient_id <- reactive({input$patientId})
+  obs <- observe({
+    patient_data <- as.data.frame(patient_json(patient_id()))
+    output$patientInfo <- DT::renderDataTable({ patient_data })
+  })
   
-  url <- "http://hackathon.siim.org/fhir/Patient/siimjoe"
-  # dependency: local system variable called SiimApiKey
-  myKey <- Sys.getenv('SiimApiKey')
-  patientReturn <- GET(url,
-                       accept_json(),
-                       add_headers('apikey' = myKey))
-  get_patient_text <- content(patientReturn, "text")
-  get_patient_json <- fromJSON(get_patient_text, flatten = TRUE)
-  # table of returned data
-  patientData <- as.data.frame(get_patient_json)
-  output$patient <- DT::renderDataTable({
-    patientData[, c(2, 14:22)]
-  })
-  # interactive json editor of data
-  output$edits <- renderJsonedit({
-    jsonedit(
-      as.list(patientData),
-      "change" = htmlwidgets::JS(
-        'function(){
-                                  console.log( event.currentTarget.parentNode.editor.get() )
-  }'
-      )
-    )
-  })
 }
 
 shinyApp(ui, server)
