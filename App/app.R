@@ -256,11 +256,11 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "json",
               fluidRow(
-                box(jsoneditOutput("edits"))
+                box(jsoneditOutput("edits"), width = 12)
               )),
       tabItem(tabName = "dataTable",
               fluidRow(
-                box(DT::dataTableOutput("patient"), title = "Patient Data")
+                box(DT::dataTableOutput("patient"), title = "Patient Data", width = 12)
               )),
       #2nd tab
       patientTab
