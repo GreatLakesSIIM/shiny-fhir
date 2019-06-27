@@ -360,7 +360,7 @@ server <- function(input, output) {
   # interactive json editor of data
   output$edits <- renderJsonedit({
     jsonedit(
-      as.list( data ),
+      as.list( patientData ),
       "change" = htmlwidgets::JS('function(){
                                   console.log( event.currentTarget.parentNode.editor.get() )
   }'))
