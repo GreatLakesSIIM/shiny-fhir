@@ -1,0 +1,10 @@
+name: shiny-fhir
+title:
+username:
+account: formsonfhir
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1002413
+bundleId: 2184213
+url: https://formsonfhir.shinyapps.io/shiny-fhir/
+when: 1561670135.69428
