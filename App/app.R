@@ -504,11 +504,21 @@ ui <- dashboardPage(
       icon = icon("th")
     ),
     menuItem(
+      "Practitioner", 
+      tabName = "practitioner", 
+      icon = icon("th")
+    ),
+    menuItem(
+      "Diagnostic Report", 
+      tabName = "DR", 
+      icon = icon("th")
+    ),
+    menuItem(
       "Data Table", 
       tabName = "dataTable", 
       icon = icon("th")
     )
-  ),
+  )),
   dashboardBody(
     tabItems(
       tabItem(tabName = "json",
@@ -531,7 +541,7 @@ ui <- dashboardPage(
     )
   )
 )
-)
+
 
 server <- function(input, output, session) {
   output$userpanel <- renderUI({
