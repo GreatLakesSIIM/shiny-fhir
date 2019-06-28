@@ -8,6 +8,7 @@ require("httr")
 require("stringi")
 require("jsonlite")
 library("listviewer")
+
 jscode <- "shinyjs.refresh = function() { location.reload(); }"
 
 all_patient_json <- function(){
@@ -136,7 +137,7 @@ orgDefaults <- c(
   "partOf"
 )
 orgFields <- c(
-  "type",
+  "type.type",
   "name",
   "alias",
   "contact.name.prefix",
@@ -699,11 +700,18 @@ server <- function(input, output, session) {
     # User-experience stuff
     shinyjs::disable("submitOrg")
     
-    # Save the data (show an error message in case of error)
     tryCatch({
-      saveData(formDataOrg())
-      shinyjs::reset("orgForm")
-    },
+      data <- c(formDataOrg())
+      names(data) <- orgFields
+      data[["resourceType"]] <- "Organization"
+      data <- toJSON(data,auto_unbox =TRUE)
+      
+      putAttempt = POST('http://hackathon.siim.org/fhir/Organization',
+                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
+                        body=data,
+                        encode="raw")
+      print(putAttempt)
+      },
     error = function(err) {
       shinyjs::html("error_msg", err$message)
       shinyjs::show(id = "error",
@@ -721,9 +729,17 @@ server <- function(input, output, session) {
     
     # Save the data (show an error message in case of error)
     tryCatch({
-      saveData(formDataPractitioner())
-      shinyjs::reset("practitionerForm")
-    },
+      data <- c(formDataPractitioner())
+      names(data) <- practitionerFields
+      data[["resourceType"]] <- "Practitioner"
+      data <- toJSON(data,auto_unbox =TRUE)
+      
+      putAttempt = POST('http://hackathon.siim.org/fhir/Practitioner',
+                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
+                        body=data,
+                        encode="raw")
+      print(putAttempt)
+e    },
     error = function(err) {
       shinyjs::html("error_msg", err$message)
       shinyjs::show(id = "error",
