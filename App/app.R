@@ -42,6 +42,7 @@ ContactFields <- c("value",
                      "use")
 
 DRDefaults <- c(
+  "resourceType",
   "category",
   "code",
   "subject",
@@ -54,7 +55,8 @@ DRDefaults <- c(
   "conclusionCode"
   )
 DRFields <-  c(
-  "category.type",
+  "resourceType",
+  "category",
   "code",
   "subject",
   "encounter",
@@ -295,9 +297,9 @@ DRTab <- tabItem(tabName = "DR",
                                        6,
                                        div(
                                          id = "DRForm",
-                                         textInput("category", ("Category"), DRDefaults[["category.type"]]),
+                                         textInput("category", ("Category"), DRDefaults[["category"]]),
                                          textInput("code", ("Code"), DRDefaults[["code"]]),
-                                         selectInput(inputId="subject",
+                                         selectInput(inputId="patientId",
                                                      label="Subject", 
                                                      choices=all_patient_json()$entry$resource.id,
                                                      selected=all_patient_json()$entry$resource.id[1]),
@@ -593,6 +595,14 @@ ui <- dashboardPage(
 
 
 server <- function(input, output, session) {
+  
+  # reactive patient data
+  patient_id <- reactive({input$patientId})
+  obs <- observe({
+    patient_data <- as.data.frame(patient_json(patient_id()))
+    output$patientInfo <- DT::renderDataTable({ patient_data })
+  })
+  
   output$userpanel <- renderUI({
     # session$user is non-NULL only in authenticated sessions
     if (is.null(session$user)) {
@@ -638,10 +648,10 @@ server <- function(input, output, session) {
     data
   })
   formDataDR <- reactive({
-    data <- sapply(DRFields, function(x)
-      input[[x]])
+    data <- sapply(DRFields, function(x) input[[x]])
     data <- c(data, timestamp = epochTime())
     data <- t(data)
+    print(data)
     data
   })
   observeEvent(input$submit, {
@@ -745,8 +755,11 @@ server <- function(input, output, session) {
     # Save the data (show an error message in case of error)
     tryCatch({
       data <- c(formDataDR())
+      names(data) <- DRFields
+      data[["subject"]] <- list("reference"=patient_id(),"type" = "Patient")
       data[["resourceType"]] <- "DiagnosticReport"
       data <- toJSON(data,auto_unbox =TRUE)
+      print(data)
       
       putAttempt = POST('http://hackathon.siim.org/fhir/DiagnosticReport',
                         add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
@@ -764,13 +777,6 @@ server <- function(input, output, session) {
     finally = {
       shinyjs::enable("DRSubmit")
     })
-  })
-  
-  # reactive patient data
-  patient_id <- reactive({input$patientId})
-  obs <- observe({
-    patient_data <- as.data.frame(patient_json(patient_id()))
-    output$patientInfo <- DT::renderDataTable({ patient_data })
   })
   
 }
