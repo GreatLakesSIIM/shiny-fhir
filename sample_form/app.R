@@ -96,6 +96,10 @@ server <- function(input, output) {
     #     
     # })
     
+    values <- reactiveValues()
+    
+    values$DT <- data.frame(c("name.given", "name.family"), function(x) input[[x]])
+    
     patientFormData <- reactive({
         toJSON(
             c({"name.given" = input$name.given}, 

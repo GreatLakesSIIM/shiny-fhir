@@ -298,7 +298,10 @@ DRTab <- tabItem(tabName = "DR",
                                          id = "DRForm",
                                          textInput("category", ("Category"), DRDefaults[["category.type"]]),
                                          textInput("code", ("Code"), DRDefaults[["code"]]),
-                                         textInput("subject", ("Subject"), DRDefaults[["subject"]]),
+                                         selectInput(inputId="subject",
+                                                     label="Subject", 
+                                                     choices=all_patient_json()$entry$resource.id,
+                                                     selected=all_patient_json()$entry$resource.id[1]),
                                          
                                          textInput("encounter", labelMandatory("Encounter"), DRDefaults[["encounter"]]),
                                          textInput("performer", labelMandatory("Practitioner"), DRDefaults[["performer"]]),
@@ -758,7 +761,6 @@ e    },
     # Save the data (show an error message in case of error)
     tryCatch({
       data <- c(formDataDR())
-      names(data) <- DRFields
       data[["resourceType"]] <- "DiagnosticReport"
       data <- toJSON(data,auto_unbox =TRUE)
       
