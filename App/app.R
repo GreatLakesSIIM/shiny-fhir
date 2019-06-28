@@ -5,6 +5,7 @@ library("shiny")
 library("shinyjs")
 library("DT")
 require("httr")
+require("stringi")
 require("jsonlite")
 library("listviewer")
 jscode <- "shinyjs.refresh = function() { location.reload(); }"
@@ -142,6 +143,7 @@ names(orgDefaults) <- orgFields
 
 patientDefaults <-
   c(
+    "Patient",
     "Ms.",
     "Patient",
     "Name",
@@ -170,6 +172,7 @@ patientDefaults <-
   )
 patientDefaults <-
   c(
+    "Patient",
     "",
     "Patient",
     "Name",
@@ -199,6 +202,7 @@ patientDefaults <-
 
 fieldsAll <-
   c(
+    "resourceType",
     "name.prefix",
     "name.given",
     "name.family",
@@ -301,20 +305,20 @@ practitionerTab <- tabItem(tabName = "practitioner",
                                        6,
                                        div(
                                          id = "practitionerForm",
-                                         textInput("name.prefix", ("name.prefix"), practitionerDefaults[["name.prefix"]]),
+                                         textInput("name.prefix", ("Prefix"), practitionerDefaults[["name.prefix"]]),
                                          textInput("name.given", labelMandatory("First Name"), practitionerDefaults[["name.given"]]),
                                          textInput("name.family", labelMandatory("Last Name"), practitionerDefaults[["name.family"]]),
-                                         textInput("name.suffix", ("name.suffix"), practitionerDefaults[["name.suffix"]]),
+                                         textInput("name.suffix", ("Suffix"), practitionerDefaults[["name.suffix"]]),
                                          
                                          numericInput(
                                            "telecom.value",
-                                           labelMandatory("telecom.value Number"),
+                                           labelMandatory("Phone"),
                                            practitionerDefaults[["telecom.value"]]
                                          ),
-                                         textInput("telecom.email", labelMandatory("telecom.email"), practitionerDefaults[["telecom.email"]]),
+                                         textInput("telecom.email", labelMandatory("Email"), practitionerDefaults[["telecom.email"]]),
                                          selectInput(
                                            "telecom.use",
-                                           labelMandatory("telecom.value Type"),
+                                           labelMandatory("Use"),
                                            choices = list(
                                              "Home" = "home",
                                              "Work" = "work",
@@ -328,14 +332,14 @@ practitionerTab <- tabItem(tabName = "practitioner",
                                            labelMandatory("Street Address"),
                                            practitionerDefaults[["address.line"]]
                                          ),
-                                         textInput("address.city", labelMandatory("address.city"), practitionerDefaults[["address.city"]]),
-                                         textInput("address.state", labelMandatory("address.state"), practitionerDefaults[["address.state"]]),
+                                         textInput("address.city", labelMandatory("City"), practitionerDefaults[["address.city"]]),
+                                         textInput("address.state", labelMandatory("State"), practitionerDefaults[["address.state"]]),
                                          textInput(
                                            "address.postalCode",
-                                           labelMandatory("address.postalCode"),
+                                           labelMandatory("Postal Code"),
                                            practitionerDefaults[["address.postalCode"]]
                                          ),
-                                         textInput("address.country", labelMandatory("address.country"), practitionerDefaults[["address.country"]]),
+                                         textInput("address.country", labelMandatory("Country"), practitionerDefaults[["address.country"]]),
                                          
                                          selectInput(
                                            "gender",
@@ -369,16 +373,16 @@ orgTab <- tabItem(tabName = "organization",
                                             choices = orgType),
                                 textInput("name", labelMandatory("Name of Organization"), orgDefaults[["name"]]),
                                 textInput("alias", ("Alias of Organization"), orgDefaults[["alias"]]),
-                                textInput("name.prefix", ("name.prefix"), orgDefaults[["contact.name.prefix"]]),
+                                textInput("name.prefix", ("Prefix"), orgDefaults[["contact.name.prefix"]]),
                                 textInput("name.given", labelMandatory("First Name"), orgDefaults[["contact.name.given"]]),
                                 textInput("name.family", labelMandatory("Last Name"), orgDefaults[["contact.name.family"]]),
-                                textInput("name.suffix", ("name.suffix"), orgDefaults[["contact.name.suffix"]]),
+                                textInput("name.suffix", ("Suffix"), orgDefaults[["contact.name.suffix"]]),
                                 
-                                numericInput("telecom.value", labelMandatory("telecom.value Number"), orgDefaults[["telecom.value"]]),
-                                textInput("telecom.email", labelMandatory("telecom.email"), orgDefaults[["telecom.email"]]),
+                                numericInput("telecom.value", labelMandatory("Phone"), orgDefaults[["telecom.value"]]),
+                                textInput("telecom.email", labelMandatory("Email"), orgDefaults[["telecom.email"]]),
                                 selectInput(
                                   "telecom.use",
-                                  labelMandatory("telecom.value Type"),
+                                  labelMandatory("Use"),
                                   choices = list(
                                     "Home" = "home",
                                     "Work" = "work",
@@ -387,10 +391,10 @@ orgTab <- tabItem(tabName = "organization",
                                   )
                                 ),
                                 textInput("address.line", labelMandatory("Street Address"), orgDefaults[["address.line"]]),
-                                textInput("address.city", labelMandatory("address.city"), orgDefaults[["address.city"]]),
-                                textInput("address.state", labelMandatory("address.state"), orgDefaults[["address.state"]]),
-                                textInput("address.postalCode", labelMandatory("address.postalCode"), orgDefaults[["address.postalCode"]]),
-                                textInput("address.country", labelMandatory("address.country"), orgDefaults[["address.country"]]),
+                                textInput("address.city", labelMandatory("City"), orgDefaults[["address.city"]]),
+                                textInput("address.state", labelMandatory("State"), orgDefaults[["address.state"]]),
+                                textInput("address.postalCode", labelMandatory("Postal Code"), orgDefaults[["address.postalCode"]]),
+                                textInput("address.country", labelMandatory("Country"), orgDefaults[["address.country"]]),
                                 
                                 textInput("partOf", ("Part of:"), orgDefaults[["partOf"]]),
                                 actionButton("submitOrg", "Submit", class = "btn-primary")
@@ -403,16 +407,16 @@ patientTab <- tabItem(tabName = "patient",
                                   6,
                                   div(
                                     id = "form",
-                                    textInput("name.prefix", ("name.prefix"), patientDefaults[["name.prefix"]]),
+                                    textInput("name.prefix", ("Prefix"), patientDefaults[["name.prefix"]]),
                                     textInput("name.given", labelMandatory("First Name"), patientDefaults[["name.given"]]),
                                     textInput("name.family", labelMandatory("Last Name"), patientDefaults[["name.family"]]),
-                                    textInput("name.suffix", ("name.suffix"), patientDefaults[["name.suffix"]]),
+                                    textInput("name.suffix", ("Suffix"), patientDefaults[["name.suffix"]]),
                                     
-                                    numericInput("telecom.value", labelMandatory("telecom.value Number"), patientDefaults[["telecom.value"]]),
-                                    textInput("telecom.email", labelMandatory("telecom.email"), patientDefaults[["telecom.email"]]),
+                                    numericInput("telecom.value", labelMandatory("Phone Number"), patientDefaults[["telecom.value"]]),
+                                    textInput("telecom.email", labelMandatory("Email"), patientDefaults[["telecom.email"]]),
                                     selectInput(
                                       "telecom.use",
-                                      labelMandatory("telecom.value Type"),
+                                      labelMandatory("Use"),
                                       choices = list(
                                         "Home" = "home",
                                         "Work" = "work",
@@ -438,10 +442,10 @@ patientTab <- tabItem(tabName = "patient",
                                     ),
                                     
                                     textInput("address.line", labelMandatory("Street Address"), patientDefaults[["address.line"]]),
-                                    textInput("address.city", labelMandatory("address.city"), patientDefaults[["address.city"]]),
-                                    textInput("address.state", labelMandatory("address.state"), patientDefaults[["address.state"]]),
-                                    textInput("address.postalCode", labelMandatory("address.postalCode"), patientDefaults[["address.postalCode"]]),
-                                    textInput("address.country", labelMandatory("address.country"), patientDefaults[["address.country"]]),
+                                    textInput("address.city", labelMandatory("City"), patientDefaults[["address.city"]]),
+                                    textInput("address.state", labelMandatory("State"), patientDefaults[["address.state"]]),
+                                    textInput("address.postalCode", labelMandatory("Postal Code"), patientDefaults[["address.postalCode"]]),
+                                    textInput("address.country", labelMandatory("Country"), patientDefaults[["address.country"]]),
                                     
                                     selectInput(
                                       "maritalStatus",
@@ -457,14 +461,14 @@ patientTab <- tabItem(tabName = "patient",
                                     checkboxInput("isSmoker", ("Is smoker?"), value = (patientDefaults[["isSmoker"]] ==
                                                                                          "TRUE")),
                                     
-                                    textInput("contact.name.prefix", ("Emergency Contact name.prefix"), patientDefaults[["contact.name.prefix"]]),
+                                    textInput("contact.name.prefix", ("Emergency Contact Name Prefix"), patientDefaults[["contact.name.prefix"]]),
                                     textInput("contact.name.given", labelMandatory("First Name"), patientDefaults[["contact.name.given"]]),
                                     textInput("contact.name.family", labelMandatory("Last Name"), patientDefaults[["contact.name.family"]]),
-                                    textInput("contact.name.suffix", ("name.suffix"), patientDefaults[["contact.name.suffix"]]),
-                                    numericInput("telecom.value", labelMandatory("telecom.value Number"), patientDefaults[["telecom.value"]]),
-                                    textInput("telecom.email", labelMandatory("telecom.email"), patientDefaults[["telecom.email"]]),
+                                    textInput("contact.name.suffix", ("Suffix"), patientDefaults[["contact.name.suffix"]]),
+                                    numericInput("telecom.value", labelMandatory("Phone Number"), patientDefaults[["telecom.value"]]),
+                                    textInput("telecom.email", labelMandatory("Email"), patientDefaults[["telecom.email"]]),
                                     selectInput(
-                                      "telecom.use",
+                                      "Use",
                                       labelMandatory("Type"),
                                       choices = list(
                                         "Home" = "home",
@@ -622,6 +626,16 @@ server <- function(input, output, session) {
     
     # Save the data (show an error message in case of error)
     tryCatch({
+      data <- c(formData())
+      names(data) <- fieldsAll
+      data[["resourceType"]] <- "Patient"
+      data <- toJSON(data,auto_unbox =TRUE)
+      
+      putAttempt = POST('http://hackathon.siim.org/fhir/Patient',
+                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
+                        body=data,
+                        encode="raw")
+      print(putAttempt)
       saveData(formData())
       shinyjs::reset("form")
       shinyjs::hide("form")
