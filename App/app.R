@@ -54,7 +54,7 @@ DRDefaults <- c(
   "conclusionCode"
   )
 DRFields <-  c(
-  "category",
+  "category.type",
   "code",
   "subject",
   "encounter",
@@ -295,7 +295,7 @@ DRTab <- tabItem(tabName = "DR",
                                        6,
                                        div(
                                          id = "DRForm",
-                                         textInput("category", ("Category"), DRDefaults[["category"]]),
+                                         textInput("category", ("Category"), DRDefaults[["category.type"]]),
                                          textInput("code", ("Code"), DRDefaults[["code"]]),
                                          textInput("subject", ("Subject"), DRDefaults[["subject"]]),
                                          
@@ -658,7 +658,6 @@ server <- function(input, output, session) {
                         body=data,
                         encode="raw")
       print(putAttempt)
-      saveData(formData())
       shinyjs::reset("form")
       shinyjs::hide("form")
     },
@@ -738,10 +737,20 @@ server <- function(input, output, session) {
   observeEvent(input$DRSubmit, {
     # User-experience stuff
     shinyjs::disable("DRSubmit")
-
+    shinyjs::hide("error")
+    
     # Save the data (show an error message in case of error)
     tryCatch({
-      saveData(formDataDR())
+      data <- c(formDataDR())
+      names(data) <- DRFields
+      data[["resourceType"]] <- "DiagnosticReport"
+      data <- toJSON(data,auto_unbox =TRUE)
+      
+      putAttempt = POST('http://hackathon.siim.org/fhir/DiagnosticReport',
+                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
+                        body=data,
+                        encode="raw")
+      print(putAttempt)
       shinyjs::reset("DRForm")
     },
     error = function(err) {
