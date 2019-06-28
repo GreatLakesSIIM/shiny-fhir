@@ -501,7 +501,8 @@ patientTab <- tabItem(tabName = "patient",
 
 #UI
 ui <- dashboardPage(
-  dashboardHeader(title = "SIIM Excitement"),
+  skin = "black",
+  dashboardHeader(title = "SIIM Forms on FHIR", titleWidth = 350),
 
   dashboardSidebar(sidebarMenu(
     id = "tabs",
@@ -537,6 +538,13 @@ ui <- dashboardPage(
     )
   )),
   dashboardBody(
+    tags$head(tags$style(HTML('
+      .main-header .logo {
+                              font-family: "Georgia", Times, "Times New Roman", serif;
+                              font-weight: bold;
+                              font-size: 24px;
+                              }
+                              '))),
     tabItems(
       tabItem(tabName = "dataTable",
               fluidRow(
