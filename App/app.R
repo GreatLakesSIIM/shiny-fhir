@@ -297,7 +297,10 @@ DRTab <- tabItem(tabName = "DR",
                                          id = "DRForm",
                                          textInput("category", ("Category"), DRDefaults[["category"]]),
                                          textInput("code", ("Code"), DRDefaults[["code"]]),
-                                         textInput("subject", ("Subject"), DRDefaults[["subject"]]),
+                                         selectInput(inputId="subject",
+                                                     label="Subject", 
+                                                     choices=all_patient_json()$entry$resource.id,
+                                                     selected=all_patient_json()$entry$resource.id[1]),
                                          
                                          textInput("encounter", labelMandatory("Encounter"), DRDefaults[["encounter"]]),
                                          textInput("performer", labelMandatory("Practitioner"), DRDefaults[["performer"]]),
@@ -741,7 +744,15 @@ server <- function(input, output, session) {
 
     # Save the data (show an error message in case of error)
     tryCatch({
-      saveData(formDataDR())
+      data <- c(formDataDR())
+      data[["resourceType"]] <- "DiagnosticReport"
+      data <- toJSON(data,auto_unbox =TRUE)
+      
+      putAttempt = POST('http://hackathon.siim.org/fhir/DiagnosticReport',
+                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
+                        body=data,
+                        encode="raw")
+      print(putAttempt)
       shinyjs::reset("DRForm")
     },
     error = function(err) {
