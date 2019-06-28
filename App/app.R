@@ -26,6 +26,20 @@ patient_json <- function(patientId){
   return(json)
 }
 
+HumanNameFields <- c("prefix",
+                     "given",
+                     "family",
+                     "suffix")
+
+AddressFields <- c("line",
+                     "city",
+                     "state",
+                     "postalCode",
+                    "country")
+
+ContactFields <- c("value",
+                     "email",
+                     "use")
 
 DRDefaults <- c(
   "category",
