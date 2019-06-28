@@ -1,0 +1,22 @@
+POST /sole/bulk-syslog-events HTTP/1.1
+Host: hackathon.siim.org
+apikey: c2e5d31b-8ba0-4d22-a41e-a2396c2de76d
+Accept: application/json
+Cache-Control: no-cache
+Content-Type: application/json
+Postman-Token: 547761d4-b745-4da6-a3d3-5544a784fbd2
+
+{"Events": [
+{
+"Pri" : "136",
+"Version": "1",
+"Timestamp": "2015-03-17T00:05",
+"Hostname": "Real.Hospital.org",
+"App-name": "forms_on_fhir",
+"Procid": "1234",
+"Comment": "What type of resource was created",
+"Msg-id": "RID45865",
+"Msg": "Report Sent"
+}
+]
+}
