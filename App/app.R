@@ -33,14 +33,14 @@ HumanNameFields <- c("prefix",
                      "suffix")
 
 AddressFields <- c("line",
-                     "city",
-                     "state",
-                     "postalCode",
-                    "country")
+                   "city",
+                   "state",
+                   "postalCode",
+                   "country")
 
 ContactFields <- c("value",
-                     "email",
-                     "use")
+                   "email",
+                   "use")
 
 DRDefaults <- c(
   "category",
@@ -69,35 +69,17 @@ DRFields <-  c(
 names(DRDefaults) <- DRFields
 
 practitionerDefaults <- c(
-  "name.prefix",
-  "name.given",
-  "name.family",
-  "name.suffix",
-  "telecom.value",
-  "telecom.email",
-  "telecom.use",
-  "address.line",
-  "address.city",
-  "address.state",
-  "address.postalCode",
-  "address.country",
+  name = list( HumanNameFields),
+  contact = list(ContactFields),
+  address = list(AddressFields),
   "F",
   "dob",
   "communication"
 )
 practitionerFields <- c(
-  "name.prefix",
-  "name.given",
-  "name.family",
-  "name.suffix",
-  "telecom.value",
-  "telecom.email",
-  "telecom.use",
-  "address.line",
-  "address.city",
-  "address.state",
-  "address.postalCode",
-  "address.country",
+  name = list( HumanNameFields),
+  contact = list(ContactFields),
+  address = list(AddressFields),
   "gender",
   "dob",
   "communication"
@@ -665,6 +647,7 @@ server <- function(input, output, session) {
       shinyjs::reset("form")
       shinyjs::hide("form")
     },
+    
     error = function(err) {
       shinyjs::html("error_msg", err$message)
       shinyjs::show(id = "error",
