@@ -632,7 +632,7 @@ server <- function(input, output, session) {
   })
   formDataDR <- reactive({
     data <- sapply(DRFields, function(x) input[[x]])
-    data <- c(data, timestamp = epochTime())
+    #data <- c(data, timestamp = epochTime())
     data <- t(data)
     print(data)
     data
