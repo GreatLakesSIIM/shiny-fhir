@@ -1,19 +1,30 @@
 <!-- Please don't remove this: Grab your social icons from https://github.com/carlsednaoui/gitsocial -->
 
-[0.1]: assets/GitHub-Mark-32px.png
+[0.1]: http://i.imgur.com/9I6NRUm.png (github icon without padding)
+[0.2]: http://i.imgur.com/wWzX9uB.png (twitter icon without padding)
+[0.3]: http://i.imgur.com/fep1WsG.png (facebook icon without padding)
+[0.4]: http://i.imgur.com/VlgBKQ9.png (google plus icon without padding)
+[0.5]: http://i.imgur.com/jDRp47c.png (tumblr icon without padding)
+[0.6]: http://i.imgur.com/Vvy3Kru.png (dribbble icon without padding)
 
-[1]: https://github.com/aiuppa
-[2]: https://github.com/abarrington
-[3]: https://github.com/peterdobbs77
+<!-- Anna's social media -->
+[1.1]: https://github.com/aiuppa
+
+<!-- Alex's social media -->
+[2.1]: https://github.com/abarrington
+
+<!-- Peter's social media -->
+[3.1]: https://github.com/peterdobbs77
+[3.2]: https://twitter.com/birdhouseElf77
 
 # Forms on FHIR
 
 ## SIIM Annual Conference Hackathon Team 2019
 
 ### Authors
-  * Anna Aiuppa [![aiuppa][0.1]][1]
-  * Alexander Barrington [![abarrington][0.1]][2]
-  * Peter Dobbs [![peterdobbs77][0.1]][3]
+  * Anna Aiuppa [![github][0.1]][1.1]
+  * Alexander Barrington [![github][0.1]][2.1]
+  * Peter Dobbs [![github][0.1]][3.1] [![twitter][0.2]][3.2]
   
 #### Radiologists are requesting to have the ability to enter information in a Google Forms format
 
