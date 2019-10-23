@@ -1,11 +1,8 @@
 <!-- Please don't remove this: Grab your social icons from https://github.com/carlsednaoui/gitsocial -->
 
-[0.1]: http://i.imgur.com/9I6NRUm.png (github icon without padding)
-[0.2]: http://i.imgur.com/wWzX9uB.png (twitter icon without padding)
-[0.3]: http://i.imgur.com/fep1WsG.png (facebook icon without padding)
-[0.4]: http://i.imgur.com/VlgBKQ9.png (google plus icon without padding)
-[0.5]: http://i.imgur.com/jDRp47c.png (tumblr icon without padding)
-[0.6]: http://i.imgur.com/Vvy3Kru.png (dribbble icon without padding)
+[0.1]: http://i.imgur.com/9I6NRUm.png (github)
+[0.2]: http://i.imgur.com/wWzX9uB.png (twitter)
+[0.3]: http://i.imgur.com/fep1WsG.png (facebook)
 
 <!-- Anna's social media -->
 [1.1]: https://github.com/aiuppa
