@@ -11,8 +11,8 @@ library("listviewer")
 
 jscode <- "shinyjs.refresh = function() { location.reload(); }"
 
-all_patient_json <- function(){
-  json <- fromJSON(content(GET('http://hackathon.siim.org/fhir/Patient',
+all_ofResourceType_json <- function(resourceType){
+  json <- fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/',resourceType),
                                accept_json(),
                                add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
                    flatten=TRUE)
@@ -25,6 +25,14 @@ patient_json <- function(patientId){
                                add_headers('apikey' = Sys.getenv(x='SiimApiKey'))),"text"),
                    flatten=TRUE)
   return(json)
+}
+
+post_data <- function(resourceType, data){
+  POST(paste0('http://hackathon.siim.org/fhir/',resourceType),
+       add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
+                   'Content-Type' = 'application/fhir+json'),
+       body=data,
+       encode="text")
 }
 
 HumanNameFields <- c("prefix",
@@ -75,7 +83,7 @@ practitionerDefaults <- c(
   contact = list(ContactFields),
   address = list(AddressFields),
   "F",
-  "dob",
+  "2000-08-12",
   "communication"
 )
 practitionerFields <- c(
@@ -169,35 +177,6 @@ patientDefaults <-
     "patientX@gmail.com",
     "Home"
   )
-patientDefaults <-
-  c(
-    "Patient",
-    "",
-    "Patient",
-    "Name",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "USA",
-    "",
-    "FALSE",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-    ""
-  )
 
 fieldsAll <-
   c(
@@ -275,31 +254,36 @@ saveData <- function(data) {
   )
 }
 DRTab <- tabItem(tabName = "DR",
-                           fluidPage(title = "DR form example",
-                                     fluidRow(column(
-                                       6,
-                                       div(
-                                         id = "DRForm",
-                                         textInput("category", ("Category"), DRDefaults[["category"]]),
-                                         textInput("code", ("Code"), DRDefaults[["code"]]),
-                                         selectInput(inputId="patientId",
-                                                     label="Subject", 
-                                                     choices=all_patient_json()$entry$resource.id,
-                                                     selected=all_patient_json()$entry$resource.id[1]),
-                                         
-                                         textInput("encounter", labelMandatory("Encounter"), DRDefaults[["encounter"]]),
-                                         textInput("performer", labelMandatory("Practitioner"), DRDefaults[["performer"]]),
-                                         textInput("resultsInterpreter", ("Results Interpreter"), DRDefaults[["resultsInterpreter"]]),
-                                         textInput("result", ("Result/Observation"), DRDefaults[["result"]]),
-                                         textInput("imagingStudy", ("Imaging Study"), DRDefaults[["imagingStudy"]]),
-                                         
-                                         
-                                         textInput("conclusion", labelMandatory("Conclusion"), DRDefaults[["conclusion"]]),
-                                         textInput("conclusionCode", labelMandatory("Conclusion Code"), DRDefaults[["conclusionCode"]]),
-                                        
-                                         actionButton("DRSubmit", "Submit", class = "btn-primary")
-                                       )
-                                     ))))
+                 fluidPage(
+                   title = "DR form example",
+                   fluidRow(
+                     column(
+                       6,
+                       div(
+                         id = "DRForm",
+                         textInput("category", ("Category"), DRDefaults[["category"]]),
+                         textInput("code", ("Code"), DRDefaults[["code"]]),
+                         selectInput(inputId="patientId",
+                                     label="Subject", 
+                                     choices=all_ofResourceType_json("Patient")$entry$resource.id,
+                                     selected=all_ofResourceType_json("Patient")$entry$resource.id[1]),
+                         
+                         textInput("encounter", labelMandatory("Encounter"), DRDefaults[["encounter"]]),
+                         textInput("performer", labelMandatory("Practitioner"), DRDefaults[["performer"]]),
+                         textInput("resultsInterpreter", ("Results Interpreter"), DRDefaults[["resultsInterpreter"]]),
+                         textInput("result", ("Result/Observation"), DRDefaults[["result"]]),
+                         textInput("imagingStudy", ("Imaging Study"), DRDefaults[["imagingStudy"]]),
+                         
+                         
+                         textInput("conclusion", labelMandatory("Conclusion"), DRDefaults[["conclusion"]]),
+                         textInput("conclusionCode", labelMandatory("Conclusion Code"), DRDefaults[["conclusionCode"]]),
+                        
+                         actionButton("DRSubmit", "Submit", class = "btn-primary")
+                         )
+                       )
+                     )
+                 )
+               )
 
 practitionerTab <- tabItem(tabName = "practitioner",
                            fluidPage(title = "Practitioner form example",
@@ -493,13 +477,14 @@ patientTab <- tabItem(tabName = "patient",
                                       choices = organizationList
                                     ),
                                     
-                                    actionButton("submit", "Submit", class = "btn-primary"),
+                                    actionButton("submitPat", "Submit", class = "btn-primary"),
                                     actionButton("addDR", "Add Diagnostic Report", class = "btn-primary"),
                                     actionButton("addObservation", "Add Observation", class = "btn-primary"),
                                     actionButton("addCondition", "Add Condition", class = "btn-primary"),
                                     actionButton("addImagingStudy", "Add Imaging Study", class = "btn-primary")
                                   )
                                 ))))
+
 
 #UI
 ui <- dashboardPage(
@@ -537,11 +522,15 @@ ui <- dashboardPage(
       "Data Table", 
       tabName = "dataTable", 
       icon = icon("th")
+    ),
+    menuItem(
+      "Upload Data",
+      tabName="upload",
+      icon=icon("th")
     )
   )),
   dashboardBody(
-    tags$head(tags$style(HTML('
-      .main-header .logo {
+    tags$head(tags$style(HTML('.main-header .logo {
                               font-family: "Georgia", Times, "Times New Roman", serif;
                               font-weight: bold;
                               font-size: 24px;
@@ -551,23 +540,28 @@ ui <- dashboardPage(
       tabItem(tabName = "dataTable",
               fluidRow(
                 box(
-                  
+                  title = "Patient Data",
+                  width = 12,
                   selectInput(inputId="organization",
-                              label="Organization:", 
-                              choices=c("siim"),
-                              selected = "siim")
-                  
-                  , selectInput(inputId="patientId",
-                                label="Patient Id:", 
-                                choices=all_patient_json()$entry$resource.id,
-                                selected=all_patient_json()$entry$resource.id[1])
-                  
-                  , DT::dataTableOutput("patientInfo")
-                  , title = "Patient Data"
-                  , width = 12
+                              label="Organization:",
+                              choices=all_ofResourceType_json("Organization")$entry$resource.name,
+                              selected = all_ofResourceType_json("Organization")$entry$resource.name[1]),
+                  selectInput(inputId="patientId",
+                              label="Patient Id:",
+                              choices=all_ofResourceType_json("Patient")$entry$resource.id,
+                              selected=all_ofResourceType_json("Patient")$entry$resource.id[1]),
+                  DT::dataTableOutput("patientInfo")
                 )
               )),
-      #2nd tab
+      tabItem(tabName = "upload",
+              fluidRow(
+                box(
+                  fileInput("jsonFile", "Choose JSON File", accept = c(".json")),
+                  textOutput("uploadStatus"),
+                  actionButton("uploadJson","Upload")
+                )
+              )
+      ),
       patientTab,
       orgTab,
       practitionerTab,
@@ -606,7 +600,6 @@ server <- function(input, output, session) {
              },
              logical(1))
     mandatoryFilled <- all(mandatoryFilled)
-    
   })
   
   formData <- reactive({
@@ -616,13 +609,7 @@ server <- function(input, output, session) {
     data <- t(data)
     data
   })
-  formDataOrg <- reactive({
-    data <- sapply(orgFields, function(x)
-      input[[x]])
-    data <- c(data, timestamp = epochTime())
-    data <- t(data)
-    data
-  })
+  
   formDataPractitioner <- reactive({
     data <- sapply(practitionerFields, function(x)
       input[[x]])
@@ -637,9 +624,35 @@ server <- function(input, output, session) {
     print(data)
     data
   })
-  observeEvent(input$submit, {
+  
+  jsonstring <- reactive({
+    df <- jsonlite::fromJSON(input$Json)
+    Branch_10 <- df$branch_items$issue_items[[1]]
+    return(Branch_10)
+  })
+  
+  output$uploadStatus <- renderText({
+    file <- input$uploadFile
+    if(is.null(file)){
+      return(NULL)
+    }
+    string <- readChar(file, file.info(file)$size)
+    string
+  })
+  
+  observeEvent(input$uploadJson,{
+    file <- input$uploadFile
+    if(is.null(file)){
+      return(NULL)
+    }
+    string <- readChar(file, file.info(file)$size)
+    postAttempt <- post_data('',string)
+    print(postAttempt)
+  })
+  
+  observeEvent(input$submitPat, {
     # User-experience stuff
-    shinyjs::disable("submit")
+    shinyjs::disable("submitPat")
     shinyjs::hide("error")
     
     # Save the data (show an error message in case of error)
@@ -649,10 +662,12 @@ server <- function(input, output, session) {
       data[["resourceType"]] <- "Patient"
       data <- toJSON(data,auto_unbox =TRUE)
       
-      putAttempt = POST('http://hackathon.siim.org/fhir/Patient',
-                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
-                        body=data,
-                        encode="raw")
+      putAttempt <- post_data('Patient',data)
+      # putAttempt <-  POST('http://hackathon.siim.org/fhir/Patient',
+      #                     add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
+      #                                 'Content-Type' = 'application/fhir+json'),
+      #                     body=data,
+      #                     encode="raw")
       print(putAttempt)
       shinyjs::reset("form")
       shinyjs::hide("form")
@@ -665,7 +680,7 @@ server <- function(input, output, session) {
                     animType = "fade")
     },
     finally = {
-      shinyjs::enable("submit")
+      shinyjs::enable("submitPat")
     })
   })
   
@@ -692,6 +707,14 @@ server <- function(input, output, session) {
       shinyjs::enable("addDR")
     })
   })
+  
+  formDataOrg <- reactive({
+    data <- sapply(orgFields, function(x)
+      input[[x]])
+    data <- c(data, timestamp = epochTime())
+    data <- t(data)
+    data
+  })
   observeEvent(input$submitOrg, {
     # User-experience stuff
     shinyjs::disable("submitOrg")
@@ -702,10 +725,7 @@ server <- function(input, output, session) {
       data[["resourceType"]] <- "Organization"
       data <- toJSON(data,auto_unbox =TRUE)
       
-      putAttempt = POST('http://hackathon.siim.org/fhir/Organization',
-                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
-                        body=data,
-                        encode="raw")
+      putAttempt <- post_data('Organization',data)
       print(putAttempt)
       },
     error = function(err) {
@@ -730,12 +750,9 @@ server <- function(input, output, session) {
       data[["resourceType"]] <- "Practitioner"
       data <- toJSON(data,auto_unbox =TRUE)
       
-      putAttempt = POST('http://hackathon.siim.org/fhir/Practitioner',
-                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
-                        body=data,
-                        encode="raw")
+      putAttempt <- post_data('Practitioner',data)
       print(putAttempt)
-e    },
+    },
     error = function(err) {
       shinyjs::html("error_msg", err$message)
       shinyjs::show(id = "error",
@@ -760,10 +777,7 @@ e    },
       data <- toJSON(data,auto_unbox =TRUE)
       print(data)
       
-      putAttempt = POST('http://hackathon.siim.org/fhir/DiagnosticReport',
-                        add_headers('apikey' = Sys.getenv(x='SiimApiKey')),
-                        body=data,
-                        encode="raw")
+      putAttempt <- post_data('DiagnosticReport',data)
       print(putAttempt)
       shinyjs::reset("DRForm")
     },
