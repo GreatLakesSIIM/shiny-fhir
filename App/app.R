@@ -210,21 +210,6 @@ fieldsAll <-
 
 names(patientDefaults) <- fieldsAll
 
-doctorList <-
-  list(
-    "Dr. Gregory House" = 1,
-    "Dr. Sheila Pathologist" = 2,
-    "Dr. Patty Radiologist" = 3,
-    "Unknown" = 4
-  )
-organizationList <-
-  list(
-    "Hospital 1" = 1,
-    "Hospital 2" = 2,
-    "Hospital 3" = 3,
-    "Unknown" = 4
-  )
-
 labelMandatory <- function(label) {
   tagList(label,
           span("*", class = "mandatory_star"))
@@ -466,15 +451,15 @@ patientTab <- tabItem(tabName = "patient",
                                     
                                     selectInput(
                                       "generalPractioner",
-                                      labelMandatory("Practioner"),
-                                      selected = patientDefaults[["generalPractioner"]],
-                                      choices = doctorList
+                                      labelMandatory("Practitioner"),
+                                      selected = all_ofResourceType_json("Practitioner")$entry$resource.id[1],
+                                      choices = all_ofResourceType_json("Practitioner")$entry$resource.id
                                     ),
                                     selectInput(
                                       "managingOrganization",
                                       labelMandatory("Organization"),
-                                      selected = patientDefaults[["managingOrganization"]],
-                                      choices = organizationList
+                                      selected = all_ofResourceType_json("Organization")$entry$resource.id[1],
+                                      choices = all_ofResourceType_json("Organization")$entry$resource.id
                                     ),
                                     
                                     actionButton("submitPat", "Submit", class = "btn-primary"),
