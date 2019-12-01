@@ -1,3 +1,4 @@
+
 library("shinydashboard")
 library("shiny")
 library("shinyjs")
@@ -6,7 +7,6 @@ require("httr")
 require("stringi")
 require("jsonlite")
 library("listviewer")
-
 
 jscode <- "shinyjs.refresh = function() { location.reload(); }"
 
@@ -487,35 +487,36 @@ ui <- dashboardPage(
         
         # The dynamically-generated user panel
         uiOutput("userpanel"),
+        
+        menuItem(
+          "Patient",
+          tabName = "patient",
+          icon = icon("th")
+        ),
+        menuItem(
+          "Diagnostic Report", 
+          tabName = "DR", 
+          icon = icon("th")
+        ),
+        menuItem(
+          "Data Table", 
+          tabName = "dataTable", 
+          icon = icon("th")
+        ),
+        menuItem(
+          "Upload Data",
+          tabName="upload",
+          icon=icon("th")
+        ),
+        menuItem(
+          "Practitioner", 
+          tabName = "practitioner", 
+          icon = icon("th")
+        ),
         menuItem(
             "Organization", 
             tabName = "organization", 
             icon = icon("th")
-        ),
-        menuItem(
-            "Practitioner", 
-            tabName = "practitioner", 
-            icon = icon("th")
-        ),
-        menuItem(
-            "Patient",
-            tabName = "patient",
-            icon = icon("th")
-        ),
-        menuItem(
-            "Diagnostic Report", 
-            tabName = "DR", 
-            icon = icon("th")
-        ),
-        menuItem(
-            "Data Table", 
-            tabName = "dataTable", 
-            icon = icon("th")
-        ),
-        menuItem(
-            "Upload Data",
-            tabName="upload",
-            icon=icon("th")
         )
     )),
     dashboardBody(
@@ -638,6 +639,19 @@ server <- function(input, output, session) {
             
             print(resp)
             print("Finished Posting Data")
+            
+            #refresh selectInput objects
+            patient_resource <- all_ofResourceType_json("Patient")$entry$resource.id
+            updateSelectInput(session,
+                              inputId="patientId",
+                              label="Patient Id:",
+                              choices=patient_resource,
+                              selected=patient_resource[1])
+            updateSelectInput(session,
+                              inputId="patientId",
+                              label="Subject", 
+                              choices=patient_resource,
+                              selected=patient_resource[1])
         },
         error = function(err){
             shinyjs::html("error_msg", err$message)
@@ -718,10 +732,24 @@ server <- function(input, output, session) {
             data <- c(formDataOrg())
             names(data) <- orgFields
             data[["resourceType"]] <- "Organization"
-            data <- toJSON(data,auto_unbox =TRUE)
+            data <- jsonlite::toJSON(data,auto_unbox =TRUE)
+            print(data)
             
             putAttempt <- post_data('Organization',data)
             print(putAttempt)
+            
+            org_resource_names <- all_ofResourceType_json("Organization")$entry$resource.name
+            
+            updateSelectInput(session,
+                              "managingOrganization",
+                              labelMandatory("Organization"),
+                              choices=org_resource_names,
+                              selected = org_resource_names[1])
+            updateSelectInput(session,
+                              inputId="organization",
+                              label="Organization:",
+                              choices=org_resource_names,
+                              selected = org_resource_names[1])
         },
         error = function(err) {
             shinyjs::html("error_msg", err$message)
@@ -730,7 +758,8 @@ server <- function(input, output, session) {
                           animType = "fade")
         },
         finally = {
-            shinyjs::enable("submitOrg")
+          shinyjs::reset("orgForm")
+          shinyjs::enable("submitOrg")
         })
     })
     
@@ -786,6 +815,8 @@ server <- function(input, output, session) {
             shinyjs::enable("DRSubmit")
         })
     })
+    
+    
     
 }
 
