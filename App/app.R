@@ -13,7 +13,7 @@ jscode <- "shinyjs.refresh = function() { location.reload(); }"
 all_ofResourceType_json <- function(resourceType){
     json <- jsonlite::fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/',resourceType),
                                            accept_json(),
-                                           add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
+                                           add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
                                                        'Content-Type' = 'application/fhir+json')
                                            ),"text"),
                                flatten=TRUE)
@@ -23,7 +23,7 @@ all_ofResourceType_json <- function(resourceType){
 patient_json <- function(patientId){
     json <- jsonlite::fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/Patient/',patientId),
                                            accept_json(),
-                                           add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483")
+                                           add_headers('apikey' = Sys.getenv(x='SiimApiKey'))
                                            ),
                                        "text"),
                                flatten=TRUE)
@@ -32,7 +32,7 @@ patient_json <- function(patientId){
 
 post_data <- function(resourceType, data){
     POST(paste0('http://hackathon.siim.org/fhir/',resourceType),
-         add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
+         add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
                      'Content-Type' = 'application/fhir+json'),
          body=data,
          encode="text")
@@ -632,7 +632,7 @@ server <- function(input, output, session) {
             json_file <- upload_file(path=inFile$datapath)
             resp <- POST('http://hackathon.siim.org/fhir/',
                          add_headers(
-                           'apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
+                           'apikey' = Sys.getenv(x='SiimApiKey'),
                            'Content-Type' = 'application/fhir+json'),
                          body=json_file)
             
