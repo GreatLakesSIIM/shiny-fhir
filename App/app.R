@@ -1,4 +1,3 @@
-
 library("shinydashboard")
 library("shiny")
 library("shinyjs")
@@ -13,7 +12,7 @@ jscode <- "shinyjs.refresh = function() { location.reload(); }"
 all_ofResourceType_json <- function(resourceType){
     json <- jsonlite::fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/',resourceType),
                                            accept_json(),
-                                           add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
+                                           add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
                                                        'Content-Type' = 'application/fhir+json')
                                            ),"text"),
                                flatten=TRUE)
@@ -23,7 +22,7 @@ all_ofResourceType_json <- function(resourceType){
 patient_json <- function(patientId){
     json <- jsonlite::fromJSON(content(GET(paste0('http://hackathon.siim.org/fhir/Patient/',patientId),
                                            accept_json(),
-                                           add_headers('apikey' = Sys.getenv(x='SiimApiKey'))
+                                           add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483")
                                            ),
                                        "text"),
                                flatten=TRUE)
@@ -32,7 +31,7 @@ patient_json <- function(patientId){
 
 post_data <- function(resourceType, data){
     POST(paste0('http://hackathon.siim.org/fhir/',resourceType),
-         add_headers('apikey' = Sys.getenv(x='SiimApiKey'),
+         add_headers('apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
                      'Content-Type' = 'application/fhir+json'),
          body=data,
          encode="text")
@@ -249,23 +248,47 @@ DRTab <- tabItem(tabName = "DR",
                              6,
                              div(
                                  id = "DRForm",
-                                 textInput("category", ("Category"), DRDefaults[["category"]]),
-                                 textInput("code", ("Code"), DRDefaults[["code"]]),
+                                 textInput("category", ("Category"), DRDefaults[["category"]]), # https://www.hl7.org/fhir/v2/0074/index.html
+                                 textInput("code", ("Code"), DRDefaults[["code"]]), # http://hl7.org/fhir/ValueSet/report-codes
                                  selectInput(inputId="patientId",
                                              label="Subject", 
                                              choices=all_ofResourceType_json("Patient")$entry$resource.id,
                                              selected=all_ofResourceType_json("Patient")$entry$resource.id[1]),
                                  
-                                 textInput("encounter", labelMandatory("Encounter"), DRDefaults[["encounter"]]),
-                                 textInput("performer", labelMandatory("Practitioner"), DRDefaults[["performer"]]),
-                                 textInput("resultsInterpreter", ("Results Interpreter"), DRDefaults[["resultsInterpreter"]]),
-                                 textInput("result", ("Result/Observation"), DRDefaults[["result"]]),
+                                 selectInput(inputId="performer",
+                                             label=labelMandatory("Practitioner"), 
+                                             choices=all_ofResourceType_json("Practitioner")$entry$resource.id,
+                                             selected=all_ofResourceType_json("Practitioner")$entry$resource.id[1]),
                                  
-                                 selectInput("imagingStudy", ("Imaging Study"), DRDefaults[["imagingStudy"]]),
+                                 selectInput(inputId="resultsInterpreter",
+                                             label=labelMandatory("Results Interpreter"), 
+                                             choices=all_ofResourceType_json("Practitioner")$entry$resource.id,
+                                             selected=all_ofResourceType_json("Practitioner")$entry$resource.id[1]),
+                                 
+                                 selectInput(inputId="specimen",
+                                             label=labelMandatory("Specimen"), 
+                                             choices=all_ofResourceType_json("Specimen")$entry$resource.id,
+                                             selected=all_ofResourceType_json("Specimen")$entry$resource.id[1]),
+                                 
+                                 selectInput(inputId="result",
+                                             label=labelMandatory("Result/Observation"), 
+                                             choices=all_ofResourceType_json("Observation")$entry$resource.id,
+                                             selected=all_ofResourceType_json("Observation")$entry$resource.id[1]),
+                                 
+                                 selectInput(inputId = "imagingStudy", 
+                                             label = labelMandatory("Imaging Study"), 
+                                             choices = all_ofResourceType_json("ImagingStudy")$entry$resource.id,
+                                             selected = all_ofResourceType_json("ImagingStudy")$entry$resource.id[1]),
                                  
                                  
                                  textInput("conclusion", labelMandatory("Conclusion"), DRDefaults[["conclusion"]]),
-                                 textInput("conclusionCode", labelMandatory("Conclusion Code"), DRDefaults[["conclusionCode"]]),
+                                 
+                                 selectInput("conclusionCode", 
+                                             labelMandatory("Conclusion Code"),
+                                             choices=c('1648002','2713001'), #SNOMED CT Codes
+                                             selected=c('1648002','2713001')[1]
+                                             #choices=GET('http://hl7.org/fhir/ValueSet/clinical-findings')
+                                             ),
                                  
                                  actionButton("DRSubmit", "Submit", class = "btn-primary")
                              )
@@ -566,7 +589,7 @@ server <- function(input, output, session) {
         # session$user is non-NULL only in authenticated sessions
         if (is.null(session$user)) {
             sidebarUserPanel(
-                span("Logged in as Dr. Barrington"),
+                span("Logged in as Dr. House"),
                 subtitle = a(icon("sign-out"), "Logout", href="https://twitter.com/logout")
             )
         }
@@ -633,7 +656,7 @@ server <- function(input, output, session) {
             json_file <- upload_file(path=inFile$datapath)
             resp <- POST('http://hackathon.siim.org/fhir/',
                          add_headers(
-                           'apikey' = Sys.getenv(x='SiimApiKey'),
+                           'apikey' = "428c400d-5f92-40be-9bf5-f27cc8a3e483",
                            'Content-Type' = 'application/fhir+json'),
                          body=json_file)
             
